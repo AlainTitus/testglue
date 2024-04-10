@@ -9,9 +9,13 @@ export default function App() {
   const [location, setLocation] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
   const [currentPosition, setCurrentPosition] = useState(null)
+  const [userLat, setUserLat] = useState(null);
+  const [userLong, SetUserLong] = useState(null);
+  const [precision, setPrecision] = useState(null)
 
 
   useEffect(() => {
+    let subscription;
     (async () => {
 
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -20,31 +24,89 @@ export default function App() {
         return;
       }
 
-      let location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
-      setCurrentPosition({ latitude: location.coords.latitude, longitude: location.coords.longitude })
+      let locat = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+        distanceInterval: 1
+      });
+      setLocation(locat);
+      const { latitude, longitude, accuracy } = locat.coords;
+      setCurrentPosition({ latitude, longitude })
+      console.log("userLats: ", latitude);
+      console.log("userLongs: ", longitude);
+      console.log('accuracy: ', accuracy)
+      setUserLat(latitude);
+      SetUserLong(longitude);
+      setPrecision(accuracy);
+      
+
+      // subscription = await Location.watchPositionAsync(
+      //   {
+      //     accuracy: Location.Accuracy.High,
+      //     distanceInterval: 1
+      //   },
+      //   (locations) => {
+      //     console.log(locations)
+      //     const { coords } = locations;
+      //     const { latitude, longitude } = coords;
+      //     console.log('userLatitude', latitude);
+      //     console.log('userLongitude', longitude);
+      //     setUserLat(latitude);
+      //     SetUserLong(longitude)
+      //   }
+      // )
+
+
     })();
   }, []);
 
 
   const getPosition = async () => {
 
+    let subscription = null
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       setErrorMsg('Permission to access location was denied');
       return;
     }
 
-    let location = await Location.getCurrentPositionAsync({});
-    setLocation(location);
-    setCurrentPosition({ latitude: location.coords.latitude, longitude: location.coords.longitude })
+    // subscription = await Location.watchPositionAsync(
+    //   {
+    //     accuracy: Location.Accuracy.High,
+    //     distanceInterval: 1
+    //   },
+    //   (location) => {
+    //     console.log(location)
+    //     const { coords } = location;
+    //     const { latitude, longitude } = coords;
+    //     console.log('userLatitude', latitude);
+    //     console.log('userLongitude', longitude);
+    //     setUserLat(latitude);
+    //     SetUserLong(longitude)
+    //   }
+    // )
+
+    let locat = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+      distanceInterval: 1
+    });
+    console.log(locat)
+    setLocation(locat);
+    const { latitude, longitude, accuracy } = locat.coords;
+    setCurrentPosition({ latitude, longitude })
+    console.log("userLats: ", latitude);
+    console.log("userLongs: ", longitude);
+    console.log("accuracy: ", accuracy)
+    setUserLat(latitude);
+    SetUserLong(longitude);
+    setPrecision(accuracy)
   }
 
   let text = 'Waiting..';
   if (errorMsg) {
     text = errorMsg;
   } else if (location) {
-    text = currentPosition ? currentPosition.latitude + " - " + currentPosition.longitude : "";
+    console.log(precision/2)
+    text = userLat == null && precision == null ? "" : userLat + " - " + userLong + " -(" + Number.parseFloat(precision).toFixed(2)+')';
   }
 
 
@@ -52,7 +114,7 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar
         animated={true}
-        barStyle= "default"
+        barStyle="default"
       />
       <View style={{ backgroundColor: "#2980B9", width: '100%', padding: 5, marginTop: 0, marginBottom: 10 }}>
         <Text style={{ textAlign: 'center', fontSize: 25, color: '#ffffff' }}>Get My position</Text>
@@ -63,16 +125,16 @@ export default function App() {
         initialRegion={{
           latitude: currentPosition.latitude,
           longitude: currentPosition.longitude,
-          latitudeDelta: 0.04,
-          longitudeDelta: 0.04
+          latitudeDelta: 1,
+          longitudeDelta: 1
         }}
       >
         <Marker
           coordinate={{
             latitude: currentPosition.latitude,
             longitude: currentPosition.longitude,
-            latitudeDelta: 0.04,
-            longitudeDelta: 0.04
+            latitudeDelta: 1,
+            longitudeDelta: 1
           }}
           title='Ma position'
           description='Position actuelle'
@@ -109,7 +171,7 @@ const styles = StyleSheet.create({
     bottom: 50,
     right: 20,
     borderRadius: 26,
-    backgroundColor: '#FBFCFC75',
+    backgroundColor: '#',
     borderWidth: 1,
     borderColor: "#2980B9",
     width: 50,
